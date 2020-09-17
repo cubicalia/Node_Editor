@@ -11,8 +11,11 @@ class QDMAbstractGraphicsEdge(QGraphicsPathItem):
         self._color_selected = QColor('#00FF00')
         self._pen = QPen(self._color)
         self._pen_selected = QPen(self._color_selected)
+        self._pen_dragging = QPen(self._color)
+        self._pen_dragging.setStyle(Qt.DashLine)
         self._pen.setWidth(3)
         self._pen_selected.setWidth(3)
+        self._pen_dragging.setWidth(3)
 
         self.posSource = [0, 0]
         self.posDestination = [200, 100]
@@ -33,7 +36,10 @@ class QDMAbstractGraphicsEdge(QGraphicsPathItem):
 
     def paint(self, painter, QStyleOptionGraphicsItem, widget=None):
         self.updatePath()
-        painter.setPen(self._pen if not self.isSelected() else self._pen_selected)
+        if self.edge.end_socket is None:
+            painter.setPen(self._pen_dragging)
+        else:
+            painter.setPen(self._pen if not self.isSelected() else self._pen_selected)
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(self.path())
 

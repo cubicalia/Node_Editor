@@ -5,6 +5,7 @@ from PyQt5.QtGui import *
 from ui.widgets.edge_graphics import QDMGraphicsEdge, QDMAbstractGraphicsEdge
 from ui.widgets.edges import Edge, EDGE_TYPE_BEZIER
 from ui.widgets.socket_graphics import QDMGraphicsSocket
+from ui.widgets.edge_graphics import QDMGraphicsEdge
 
 MODE_NOOP = 1
 MODE_EDGE_DRAG = 2
@@ -146,6 +147,13 @@ class QDMGraphicsView(QGraphicsView):
     def rightMouseButtonRelease(self, event):
         super().mouseReleaseEvent(event)
 
+    def mouseMoveEvent(self, event):
+        if self.mode == MODE_EDGE_DRAG:
+            pos = self.mapToScene(event.pos())
+            self.dragEdge.grEdge.setDestination(pos.x(), pos.y())
+            self.dragEdge.grEdge.update()
+        super().mouseMoveEvent(event)
+
     def getItemAtClick(self, event):
         pos = event.pos()
         obj = self.itemAt(pos)
@@ -159,10 +167,27 @@ class QDMGraphicsView(QGraphicsView):
 
     def edgeDragEnd(self, item):
         self.mode = MODE_NOOP
-        if DEBUG: print('Edge dragging ended')
+
         if type(item) is QDMGraphicsSocket:
-            if DEBUG: print('-- Socket end assigned')
+            if DEBUG:
+                print('-- Socket end assigned', item.socket)
+            self.dragEdge.end_socket = item.socket
+            self.dragEdge.start_socket.setConnectedEdge(self.dragEdge)
+            self.dragEdge.end_socket.setConnectedEdge(self.dragEdge)
+            if DEBUG:
+                print('View::edgeDragEnd ~ Assigned start and end sockets to dragEdge')
+            self.dragEdge.updatePositions()
             return True
+
+        if DEBUG:
+            print('View::edgeDragEnd ~ End dragging edge')
+        self.dragEdge.remove()
+        self.dragEdge = None
+        if DEBUG:
+            print('View::edgeDragEnd ~ Done')
+
+
+
         return False
 
     def distance_is_negligeable(self, event):
